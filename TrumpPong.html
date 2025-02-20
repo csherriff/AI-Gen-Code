@@ -1,1 +1,142 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trump Pong</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        canvas {
+            background: #000;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+    let canvas;
+    let ctx;
+    let ballX = window.innerWidth / 2;
+    let ballY = window.innerHeight / 2;
+    let ballSpeedX = 10;
+    let ballSpeedY = 10;
+    let paddle1Y = window.innerHeight / 2 - 50;
+    let paddle2Y = window.innerHeight / 2 - 50;
+    const PADDLE_HEIGHT = 100;
+    const PADDLE_WIDTH = 10;
+    const BALL_SIZE = 50; // Adjust based on image size
+
+    // Placeholder for Trump's head image
+    let ballImage = new Image();
+    ballImage.src = 'https://pngimg.com/uploads/donald_trump/donald_trump_PNG48.png'; // Replace with a real URL or local path
+
+    function init() {
+        canvas = document.getElementById("gameCanvas");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        ctx = canvas.getContext('2d');
+
+        document.addEventListener("keydown", keyDownHandler);
+        document.addEventListener("keyup", keyUpHandler);
+
+        setInterval(gameLoop, 1000/60); // 60 FPS
+    }
+
+    let upPressed1 = false;
+    let downPressed1 = false;
+    let upPressed2 = false;
+    let downPressed2 = false;
+
+    function keyDownHandler(e) {
+        if(e.key == "w") upPressed1 = true;
+        if(e.key == "s") downPressed1 = true;
+        if(e.key == "ArrowUp") upPressed2 = true;
+        if(e.key == "ArrowDown") downPressed2 = true;
+    }
+
+    function keyUpHandler(e) {
+        if(e.key == "w") upPressed1 = false;
+        if(e.key == "s") downPressed1 = false;
+        if(e.key == "ArrowUp") upPressed2 = false;
+        if(e.key == "ArrowDown") downPressed2 = false;
+    }
+
+    function gameLoop() {
+        movePaddle(upPressed1, downPressed1, paddle1Y, -1);
+        movePaddle(upPressed2, downPressed2, paddle2Y, 1);
+        moveBall();
+        drawEverything();
+    }
+
+    function movePaddle(up, down, paddleY, player) {
+        if(up && paddleY > 0) paddleY -= 7;
+        if(down && paddleY < canvas.height - PADDLE_HEIGHT) paddleY += 7;
+        
+        if(player === -1) paddle1Y = paddleY;
+        else paddle2Y = paddleY;
+    }
+
+    function moveBall() {
+        ballX += ballSpeedX;
+        ballY += ballSpeedY;
+
+        // Bounce off top and bottom
+        if(ballY < 0 || ballY > canvas.height) {
+            ballSpeedY = -ballSpeedY;
+        }
+
+        // Check for paddle collision
+        let leftPaddle = {x: 0, y: paddle1Y};
+        let rightPaddle = {x: canvas.width - PADDLE_WIDTH, y: paddle2Y};
+
+        if(checkPaddleCollision(leftPaddle)) {
+            ballSpeedX = -ballSpeedX;
+            let deltaY = ballY - (leftPaddle.y + PADDLE_HEIGHT/2);
+            ballSpeedY = deltaY * 0.35;
+        }
+        if(checkPaddleCollision(rightPaddle)) {
+            ballSpeedX = -ballSpeedX;
+            let deltaY = ballY - (rightPaddle.y + PADDLE_HEIGHT/2);
+            ballSpeedY = deltaY * 0.35;
+        }
+
+        // Reset if ball goes left or right
+        if(ballX < 0 || ballX > canvas.width) {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            ballSpeedX = -ballSpeedX;
+            ballSpeedY = Math.random() > 0.5 ? 10 : -10; // Randomize Y speed
+        }
+    }
+
+    function checkPaddleCollision(paddle) {
+        return ballX > paddle.x && ballX < paddle.x + PADDLE_WIDTH && 
+               ballY > paddle.y && ballY < paddle.y + PADDLE_HEIGHT;
+    }
+
+    function drawEverything() {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw ball as Trump's head
+        ctx.drawImage(ballImage, ballX - BALL_SIZE/2, ballY - BALL_SIZE/2, BALL_SIZE, BALL_SIZE);
+
+        // Draw paddles
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, paddle1Y, PADDLE_WIDTH, PADDLE_HEIGHT);
+        ctx.fillRect(canvas.width - PADDLE_WIDTH, paddle2Y, PADDLE_WIDTH, PADDLE_HEIGHT);
+    }
+
+    init();
+    </script>
+</body>
+</html>
